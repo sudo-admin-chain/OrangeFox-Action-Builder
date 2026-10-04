@@ -223,6 +223,10 @@ jobs:
         add_if_missing "AB_OTA_PARTITIONS += vendor"
         add_if_missing "AB_OTA_PARTITIONS += odm"
         add_if_missing "AB_OTA_PARTITIONS += vendor_dlkm"
+        add_if_missing "BOARD_USES_VENDOR_BOOTIMAGE := true"
+        add_if_missing "BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 67108864"
+        add_if_missing "BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864"
+        add_if_missing "BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864"
         
         echo "=== Final BoardConfig.mk (tail) ==="
         tail -20 BoardConfig.mk
@@ -267,10 +271,10 @@ jobs:
 
         DEVICE_TREE_URL="${{ inputs.DEVICE_TREE }}"
         if [[ "${DEVICE_TREE_URL}" == *.git ]]; then
-          DEVICE_TREE_URL="${DEVICE_TREE_URL%.git}"
+          trueTREE_URL="${DEVICE_TREE_URL%.git}"
         fi
         echo "DEVICE_TREE_URL=${DEVICE_TREE_URL}" >> $GITHUB_ENV
-
+        
     - name: Upload to Release
       uses: softprops/action-gh-release@master
       with:
@@ -279,11 +283,13 @@ jobs:
           OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/boot*.img
           OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/recovery*.img
           OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.img
-          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.zip        name: OrangeFox Recovery for ${{ inputs.DEVICE_NAME }} // ${{ env.BUILD_DATE }}
+          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.zip
+        name: OrangeFox Recovery for ${{ inputs.DEVICE_NAME }} // ${{ env.BUILD_DATE }}
         tag_name: ${{ github.run_id }}
         body: |
           ## OrangeFox Recovery Build - Unofficial
           Build: fox_${{ inputs.MANIFEST_BRANCH }}
-          Device: [Device Tree/Branch](${{ env.DEVICE_TREE_URL }}/tree/${{ inputs.DEVICE_TREE_BRANCH }})
-          Commit: Most recent [commit](${{ env.DEVICE_TREE_URL }}/commit/${{ env.COMMIT_ID }}) during building.
-          
+          Device: ${{ env.DEVICE_TREE_URL }}
+          Commit: Most recent during building.
+        overwrite_files: true
+        token: ${{ secrets.GITHUB_TOKEN }}
