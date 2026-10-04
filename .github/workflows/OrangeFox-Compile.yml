@@ -140,7 +140,8 @@ jobs:
       if: inputs.MANIFEST_BRANCH == '12.1'
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/bootable/recovery
-        git remote add ymdzq https://github.com/ymdzq/OrangeFox_Recovery && git fetch ymdzq fox_12.1 && git merge --no-ff ymdzq/fox_12.1 -m "Apply custom patches"
+        git remote add ymdzq https://github.com/ymdzq/OrangeFox_Recovery && git fetch ymdzq fox_12.1 
+        # git merge --no-ff ymdzq/fox_12.1 -m "Apply custom patches"
         if [ "${{ inputs.ADD_WLAN_SUPPORT }}" = "true" ]; then
         wget "https://github.com/ymdzq/OrangeFox_Recovery/commit/f8712872b9ec663b658a1e8eba4840877fe45ea6.patch" -O wlan.patch
         git am wlan.patch
