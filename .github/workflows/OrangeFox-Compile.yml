@@ -192,6 +192,15 @@ jobs:
         fi
         tail -5 BoardConfig.mk
 
+    - name: Patch FOX_VERSION -> FOX_MAINTAINER_PATCH_VERSION
+      run: |
+        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/device/xiaomi/spinel
+        echo "=== Before ==="
+        grep -n "FOX_VERSION" vendorsetup.sh || echo "not found"
+        sed -i 's/^export FOX_VERSION=.*/export FOX_MAINTAINER_PATCH_VERSION=1/' vendorsetup.sh
+        echo "=== After ==="
+        grep -n "FOX_MAINTAINER_PATCH_VERSION\|FOX_VERSION" vendorsetup.sh || echo "not found"
+        
     - name: Building OrangeFox
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
