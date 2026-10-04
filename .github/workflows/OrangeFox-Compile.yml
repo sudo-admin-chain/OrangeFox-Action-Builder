@@ -181,6 +181,17 @@ jobs:
         
         ls -la vendor/
 
+    - name: Patch BoardConfig.mk (TARGET_SUPPORTS_64_BIT_APPS)
+      run: |
+        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/device/xiaomi/spinel
+        if ! grep -q "TARGET_SUPPORTS_64_BIT_APPS" BoardConfig.mk; then
+          echo "TARGET_SUPPORTS_64_BIT_APPS := true" >> BoardConfig.mk
+          echo "Added TARGET_SUPPORTS_64_BIT_APPS"
+        else
+          echo "Already present"
+        fi
+        tail -5 BoardConfig.mk
+
     - name: Building OrangeFox
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
