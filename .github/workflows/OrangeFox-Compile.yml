@@ -235,6 +235,15 @@ jobs:
         add_if_missing "FOX_VIRTUAL_AB_DEVICE := 1"
         add_if_missing "FOX_USE_MAGISKBOOT := 1"
         add_if_missing "FOX_USE_MAGISKBOOT_FOR_ALL_PATCHES := 1"
+        add_if_missing "AB_OTA_PARTITIONS += boot"
+        add_if_missing "AB_OTA_PARTITIONS += init_boot"
+        add_if_missing "AB_OTA_PARTITIONS += vendor_boot"
+        add_if_missing "AB_OTA_PARTITIONS += system"
+        add_if_missing "AB_OTA_PARTITIONS += system_ext"
+        add_if_missing "AB_OTA_PARTITIONS += product"
+        add_if_missing "AB_OTA_PARTITIONS += vendor"
+        add_if_missing "AB_OTA_PARTITIONS += odm"
+        add_if_missing "AB_OTA_PARTITIONS += vendor_dlkm"
         
         echo "=== Final BoardConfig.mk (tail) ==="
         tail -20 BoardConfig.mk
