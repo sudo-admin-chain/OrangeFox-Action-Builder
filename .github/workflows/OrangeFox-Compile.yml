@@ -201,6 +201,17 @@ jobs:
         echo "=== After ==="
         grep -n "FOX_MAINTAINER_PATCH_VERSION\|FOX_VERSION" vendorsetup.sh || echo "not found"
         sed -i 's/\bOF_/FOX_/g' vendorsetup.sh
+
+    - name: Replace OF_ with FOX_ in device tree
+      run: |
+        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/device/xiaomi/spinel
+        # Ищем все .mk и .sh файлы с OF_ и заменяем
+        grep -rl "\bOF_" . --include="*.mk" --include="*.sh" | while read f; do
+          echo "Patching: $f"
+          sed -i 's/\bOF_/FOX_/g' "$f"
+        done
+        echo "=== Result ==="
+        grep -rn "OF_AB_DEVICE\|FOX_AB_DEVICE" . || echo "no matches"
         
     - name: Building OrangeFox
       run: |
