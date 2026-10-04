@@ -227,27 +227,20 @@ jobs:
         echo "=== Final BoardConfig.mk (tail) ==="
         tail -20 BoardConfig.mk
 
-    - name: Rename vendor/twrp to vendor/fox
+    - name: Patch device tree vendor/fox -> vendor/twrp
       run: |
-        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/vendor
+        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/device/xiaomi/spinel
         echo "=== Before ==="
-        ls -la
+        grep -rn "vendor/fox" . || echo "no vendor/fox found"
         
-        if [ -d twrp ]; then
-          mv twrp fox
-          echo "Renamed twrp -> fox"
-        elif [ -d recovery ]; then
-          mv recovery fox
-          echo "Renamed recovery -> fox"
-        else
-          echo "ERROR: neither twrp or recovery found"
-          exit 1
-        fi
+        grep -rl "vendor/fox" . --include="*.mk" --include="*.sh" | while read f; do
+          sed -i 's|vendor/fox|vendor/twrp|g' "$f"
+          echo "Patched: $f"
+        done
         
         echo "=== After ==="
-        ls -la
-        ls -la fox/config/common.mk || echo "common.mk NOT FOUND"
-        
+        grep -rn "vendor/fox\|vendor/twrp" . --include="*.mk" --include="*.sh" || echo "no matches"
+
     - name: Building OrangeFox
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
