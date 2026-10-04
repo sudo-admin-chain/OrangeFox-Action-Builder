@@ -12,7 +12,7 @@ on:
       MANIFEST_BRANCH:
         description: 'OrangeFox Manifest Branch'
         required: true
-        default: '14.1'
+        default: '12.1'
         type: choice
         options:
         - 12.1
@@ -20,42 +20,33 @@ on:
       DEVICE_TREE:
         description: 'OrangeFox Device Tree'
         required: true
-        default: 'https://github.com/adontoo/device_xiaomi_sm8750_OFRP'
+        default: 'https://github.com/yxqo41/android_device_xiaomi_spinel'
       DEVICE_TREE_BRANCH:
         description: 'OrangeFox Device Tree Branch'
         required: true
-        default: 'fox_14.1'
+        default: 'twrp'
       DEVICE_PATH:
         description: 'Specify your Device Path'
         required: true
-        default: 'device/xiaomi/sm8750_thales'
+        default: 'device/xiaomi/spinel'
       DEVICE_NAME:
         description: 'Specify your Device Codename'
         required: true
-        default: 'sm8750_thales'
+        default: 'spinel'
       BUILD_TARGET:
         description: 'Specify your Build Target'
         required: true
-        default: 'recovery'
+        default: 'vendorboot'
         type: choice
         options:
         - boot
         - recovery
         - vendorboot
-      MAGISK_VERSION:
-        description: 'Specify your Magisk Version'
-        required: true
-        default: 'MagiskAlpha'
-        type: choice
-        options:
-        - Magisk
-        - MagiskAlpha
-        - MagiskDelta
       ADD_WLAN_SUPPORT:
         description: 'Add WLAN support (EXPERIMENTAL!!)'
         type: boolean
         required: true
-        default: true
+        default: false
       USE_CCACHE:
         description: Use ccache for compilation
         type: boolean
@@ -140,7 +131,8 @@ jobs:
       if: inputs.MANIFEST_BRANCH == '12.1'
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/bootable/recovery
-        git remote add ymdzq https://github.com/ymdzq/OrangeFox_Recovery && git fetch ymdzq fox_12.1 && git merge --no-ff ymdzq/fox_12.1 -m "Apply custom patches"
+        git remote add ymdzq https://github.com/ymdzq/OrangeFox_Recovery && git fetch ymdzq fox_12.1 
+        # git merge --no-ff ymdzq/fox_12.1 -m "Apply custom patches"
         if [ "${{ inputs.ADD_WLAN_SUPPORT }}" = "true" ]; then
         wget "https://github.com/ymdzq/OrangeFox_Recovery/commit/f8712872b9ec663b658a1e8eba4840877fe45ea6.patch" -O wlan.patch
         git am wlan.patch
@@ -168,25 +160,14 @@ jobs:
         cd ${{ inputs.DEVICE_PATH }}
         echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-    - name: Update OrangeFox Built-in Magisk
+    - name: Debug vendor dir
       run: |
-        git clone https://github.com/ymdzq/twrp_prebuilt ~/twrp_prebuilt
-        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/${{ inputs.DEVICE_PATH }}
-        if ! grep -q 'FOX_USE_SPECIFIC_MAGISK_ZIP' vendorsetup.sh; then (echo 'export FOX_USE_SPECIFIC_MAGISK_ZIP=~/twrp_prebuilt/Magisk/${{ inputs.MAGISK_VERSION }}.apk'>>vendorsetup.sh && echo "Added FOX_USE_SPECIFIC_MAGISK_ZIP in vendorsetup.sh"); else sed -i 's/.*export FOX_USE_SPECIFIC_MAGISK_ZIP.*/export FOX_USE_SPECIFIC_MAGISK_ZIP=\~\/twrp_prebuilt\/Magisk\/${{ inputs.MAGISK_VERSION }}.apk/' vendorsetup.sh; fi
-        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/vendor/recovery
-        curl -L --retry 3 "https://github.com/ymdzq/scripts/blob/main/Magisk_ver.patch?raw=true" -o Magisk_ver.patch
-        if [ "${{ inputs.MANIFEST_BRANCH }}" = "14.1" ]; then
-          sed -i 's/OrangeFox_A12.sh/OrangeFox_A14.sh/g' Magisk_ver.patch
-        fi
-        git am Magisk_ver.patch
-
-    - name: Update OrangeFox Built-in magiskboot
-      run: |
-        curl -L --retry 3 $(echo $(curl -s "https://api.github.com/repos/topjohnwu/Magisk/releases?per_page=1&include_prereleases=true") | jq -r '.[0].assets[] | select(.name | test("Magisk-.*\\.apk")) | .browser_download_url') -o Magisk.apk
-        unzip -q Magisk.apk "lib/*/libmagiskboot.so" -d ~/magiskboot
-        cp -f ~/magiskboot/lib/armeabi-v7a/libmagiskboot.so "${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/vendor/recovery/prebuilt/arm/magiskboot_updated"
-        cp -f ~/magiskboot/lib/arm64-v8a/libmagiskboot.so "${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/vendor/recovery/prebuilt/arm64/magiskboot_updated"
-        cp -f ~/magiskboot/lib/x86_64/libmagiskboot.so "${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/vendor/recovery/tools/magiskboot"
+        echo "=== vendor/ contents ==="
+        ls -la ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/vendor/ || echo "no vendor dir"
+        echo "=== find fox/recovery/config ==="
+        find ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/ -type d -name "config" 2>/dev/null | head -20
+        echo "=== find common.mk ==="
+        find ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/ -name "common.mk" 2>/dev/null | grep -i "vendor\|fox\|recovery" | head -20
 
     - name: Building OrangeFox
       run: |
@@ -202,9 +183,9 @@ jobs:
         export ALLOW_MISSING_DEPENDENCIES=true
         set -e
         if [[ ${{ inputs.MANIFEST_BRANCH }} == '14.1' ]]; then
-        lunch twrp_${{ inputs.DEVICE_NAME }}-ap2a-eng && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image
+        lunch fox_${{ inputs.DEVICE_NAME }}-ap2a-eng && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image
         else
-        lunch twrp_${{ inputs.DEVICE_NAME }}-eng && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image
+        lunch fox_${{ inputs.DEVICE_NAME }}-eng && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image
         fi
 
     - name: Set Release Properties
@@ -218,10 +199,33 @@ jobs:
         fi
         echo "DEVICE_TREE_URL=${DEVICE_TREE_URL}" >> $GITHUB_ENV
 
-    - name: Upload to Artifact
-      uses: actions/upload-artifact@main
-      with:
-        name: OrangeFox Recovery for ${{ inputs.DEVICE_NAME }}(${{ env.BUILD_DATE }})
-        path: |
-          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.zip
+    - name: List all output files
+      run: |
+        echo "=== Directory contents ==="
+        ls -la ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/out/target/product/spinel/ || echo "DIR NOT FOUND"
+        echo "=== .img files ==="
+        find ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/out/target/product/spinel/ -name "*.img" 2>/dev/null
+        echo "=== .zip files ==="
+        find ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/out/target/product/spinel/ -name "*.zip" 2>/dev/null
+        echo "=== .tar files ==="
+        find ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/out/target/product/spinel/ -name "*.tar*" 2>/dev/null
+        echo "=== OrangeFox named files ==="
+        find ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/out/target/product/spinel/ -iname "*orangefox*" 2>/dev/null
+        echo "=== Any files >1MB ==="
+        find ${GITHUB_WORKSPACE}/OrangeFox/fox_14.1/out/target/product/spinel/ -type f -size +1M -ls 2>/dev/null
+        
 
+    - name: Upload to Release
+      uses: softprops/action-gh-release@master
+      with:
+        files: |
+          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.img
+          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.zip
+        name: OrangeFox Recovery for ${{ inputs.DEVICE_NAME }} // ${{ env.BUILD_DATE }}
+        tag_name: ${{ github.run_id }}
+        body: |
+          ## OrangeFox Recovery Build - Unofficial
+          Build: fox_${{ inputs.MANIFEST_BRANCH }}
+          Device: [Device Tree/Branch](${{ env.DEVICE_TREE_URL }}/tree/${{ inputs.DEVICE_TREE_BRANCH }})
+          Commit: Most recent [commit](${{ env.DEVICE_TREE_URL }}/commit/${{ env.COMMIT_ID }}) during building.
+          
