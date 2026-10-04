@@ -212,6 +212,32 @@ jobs:
         done
         echo "=== Result ==="
         grep -rn "OF_AB_DEVICE\|FOX_AB_DEVICE" . || echo "no matches"
+
+    - name: Patch BoardConfig.mk (full set)
+      run: |
+        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/device/xiaomi/spinel
+        
+        add_if_missing() {
+          if ! grep -q "^$1" BoardConfig.mk; then
+            echo "$1" >> BoardConfig.mk
+            echo "Added: $1"
+          fi
+        }
+        
+        add_if_missing "TW_MAX_BRIGHTNESS := 255"
+        add_if_missing "TW_DEFAULT_BRIGHTNESS := 128"
+        add_if_missing "TW_THEME := portrait_hdpi"
+        add_if_missing "AB_OTA_UPDATER := true"
+        add_if_missing "TW_INCLUDE_FBE_METADATA_DECRYPTION := true"
+        add_if_missing "TW_USE_FSCRYPT_POLICY := 2"
+        add_if_missing "TW_USE_TOOLBOX := true"
+        add_if_missing "FOX_AB_DEVICE := 1"
+        add_if_missing "FOX_VIRTUAL_AB_DEVICE := 1"
+        add_if_missing "FOX_USE_MAGISKBOOT := 1"
+        add_if_missing "FOX_USE_MAGISKBOOT_FOR_ALL_PATCHES := 1"
+        
+        echo "=== Final BoardConfig.mk (tail) ==="
+        tail -20 BoardConfig.mk
         
     - name: Building OrangeFox
       run: |
