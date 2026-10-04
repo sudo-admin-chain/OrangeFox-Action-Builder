@@ -24,7 +24,7 @@ on:
       DEVICE_TREE_BRANCH:
         description: 'OrangeFox Device Tree Branch'
         required: true
-        default: 'mondrian'
+        default: 'twrp'
       DEVICE_PATH:
         description: 'Specify your Device Path'
         required: true
@@ -174,9 +174,9 @@ jobs:
         export ALLOW_MISSING_DEPENDENCIES=true
         set -e
         if [[ ${{ inputs.MANIFEST_BRANCH }} == '14.1' ]]; then
-        lunch twrp_${{ inputs.DEVICE_NAME }}-ap2a-eng && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image
+        lunch fox_${{ inputs.DEVICE_NAME }}-ap2a-eng && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image
         else
-        lunch twrp_${{ inputs.DEVICE_NAME }}-eng && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image
+        lunch fox_${{ inputs.DEVICE_NAME }}-eng && make clean && mka adbd ${{ inputs.BUILD_TARGET }}image
         fi
 
     - name: Set Release Properties
