@@ -160,27 +160,6 @@ jobs:
         cd ${{ inputs.DEVICE_PATH }}
         echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-    - name: Symlink vendor/fox
-      run: |
-        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
-        mkdir -p vendor
-        
-        if [ -f vendor/twrp/config/common.mk ]; then
-          ln -sfn twrp vendor/fox
-          echo "Linked vendor/fox -> twrp"
-        elif [ -f vendor/recovery/config/common.mk ]; then
-          ln -sfn recovery vendor/fox
-          echo "Linked vendor/fox -> recovery"
-        elif [ -f vendor/fox/config/common.mk ]; then
-          echo "vendor/fox already exists"
-        else
-          echo "ERROR: no vendor tree with common.mk found"
-          ls -la vendor/
-          exit 1
-        fi
-        
-        ls -la vendor/
-
     - name: Patch BoardConfig.mk (TARGET_SUPPORTS_64_BIT_APPS)
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/device/xiaomi/spinel
@@ -247,6 +226,27 @@ jobs:
         
         echo "=== Final BoardConfig.mk (tail) ==="
         tail -20 BoardConfig.mk
+
+    - name: Rename vendor/twrp to vendor/fox
+      run: |
+        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/vendor
+        echo "=== Before ==="
+        ls -la
+        
+        if [ -d twrp ]; then
+          mv twrp fox
+          echo "Renamed twrp -> fox"
+        elif [ -d recovery ]; then
+          mv recovery fox
+          echo "Renamed recovery -> fox"
+        else
+          echo "ERROR: neither twrp or recovery found"
+          exit 1
+        fi
+        
+        echo "=== After ==="
+        ls -la
+        ls -la fox/config/common.mk || echo "common.mk NOT FOUND"
         
     - name: Building OrangeFox
       run: |
