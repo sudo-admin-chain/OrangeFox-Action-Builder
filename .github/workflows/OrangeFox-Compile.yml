@@ -200,6 +200,7 @@ jobs:
         sed -i 's/^export FOX_VERSION=.*/export FOX_MAINTAINER_PATCH_VERSION=1/' vendorsetup.sh
         echo "=== After ==="
         grep -n "FOX_MAINTAINER_PATCH_VERSION\|FOX_VERSION" vendorsetup.sh || echo "not found"
+        sed -i 's/\bOF_/FOX_/g' vendorsetup.sh
         
     - name: Building OrangeFox
       run: |
