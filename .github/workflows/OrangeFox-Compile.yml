@@ -160,6 +160,27 @@ jobs:
         cd ${{ inputs.DEVICE_PATH }}
         echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
+    - name: Symlink vendor/fox
+      run: |
+        cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
+        mkdir -p vendor
+        
+        if [ -f vendor/twrp/config/common.mk ]; then
+          ln -sfn twrp vendor/fox
+          echo "Linked vendor/fox -> twrp"
+        elif [ -f vendor/recovery/config/common.mk ]; then
+          ln -sfn recovery vendor/fox
+          echo "Linked vendor/fox -> recovery"
+        elif [ -f vendor/fox/config/common.mk ]; then
+          echo "vendor/fox already exists"
+        else
+          echo "ERROR: no vendor tree with common.mk found"
+          ls -la vendor/
+          exit 1
+        fi
+        
+        ls -la vendor/
+
     - name: Building OrangeFox
       run: |
         cd ${GITHUB_WORKSPACE}/OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}
@@ -194,9 +215,11 @@ jobs:
       uses: softprops/action-gh-release@master
       with:
         files: |
+          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/vendor_boot*.img
+          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/boot*.img
+          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/recovery*.img
           OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.img
-          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.zip
-        name: OrangeFox Recovery for ${{ inputs.DEVICE_NAME }} // ${{ env.BUILD_DATE }}
+          OrangeFox/fox_${{ inputs.MANIFEST_BRANCH }}/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.zip        name: OrangeFox Recovery for ${{ inputs.DEVICE_NAME }} // ${{ env.BUILD_DATE }}
         tag_name: ${{ github.run_id }}
         body: |
           ## OrangeFox Recovery Build - Unofficial
