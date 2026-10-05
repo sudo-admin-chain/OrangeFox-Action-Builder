@@ -41,7 +41,7 @@ on:
         options:
         - boot
         - recovery
-        - vendorboot
+        - vendor_boot
       ADD_WLAN_SUPPORT:
         description: 'Add WLAN support (EXPERIMENTAL!!)'
         type: boolean
